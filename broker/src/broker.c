@@ -178,6 +178,14 @@ void broker_https_on_data_callback(Client *client, void *data)
             goto exit;
         }
 
+        read = dslink_socket_read(client->sock, buf + read, sizeof(buf) - 1 - read);
+
+        if (read < 0)
+        {
+            log_debug("READ failed\n");
+            goto exit;
+        }
+
         buf[read] = '\0';
         int err = broker_http_parse_req(&req, buf);
         if (err)
