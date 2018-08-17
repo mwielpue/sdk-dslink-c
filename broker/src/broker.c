@@ -166,6 +166,7 @@ void broker_https_on_data_callback(Client *client, void *data)
         goto exit;
     }
 
+    log_debug("Starting to read\n");
     HttpRequest req;
     char buf[1024];
     char bodyBuf[1024];
@@ -173,6 +174,7 @@ void broker_https_on_data_callback(Client *client, void *data)
         int read = dslink_socket_read(client->sock, buf, sizeof(buf) - 1);
         if (read < 0)
         {
+            log_debug("READ failed\n");
             goto exit;
         }
 
@@ -180,6 +182,7 @@ void broker_https_on_data_callback(Client *client, void *data)
         int err = broker_http_parse_req(&req, buf);
         if (err)
         {
+            log_debug("Error parsing request\n");
             goto exit;
         }
 
