@@ -112,16 +112,20 @@ static void broker_server_client_ready(uv_poll_t *poll, int status,
 static void broker_ssl_server_client_ready(uv_poll_t *poll, int status,
                                            int events)
 {
-  log_debug("broker_ssl_server_client_ready");
+  log_debug("broker_ssl_server_client_ready\n");
   (void)status;
   Client *client = poll->data;
   SslServer *server = (SslServer *)client->server;
   SslSocket *sslSocket = (SslSocket *)client->sock;
+
+  log_debug("Checking for read event\n");
   if (client && server && sslSocket && (events & UV_READABLE))
   {
+    log_debug("Reading\n");
     server->data_ready(client, poll->loop->data);
     if (sslSocket->socket_ctx.fd == -1)
     {
+      log_debug("Socket is dead after reading\n");
       broker_server_free_client(poll);
       client = NULL;
     }
@@ -131,7 +135,7 @@ static void broker_ssl_server_client_ready(uv_poll_t *poll, int status,
     // broker_server_client_fail(poll);
     // The callback closed the connection
     RemoteDSLink *link = client->sock_data;
-    log_debug("CLOSING CLIENT CONNECTION");
+    log_debug("CLOSING CLIENT CONNECTION\n");
     if (link)
     {
       broker_close_link(link);
@@ -143,6 +147,7 @@ static void broker_ssl_server_client_ready(uv_poll_t *poll, int status,
     client = NULL;
   }
 
+  log_debug("Checking for write event\n");
   if (client && (events & UV_WRITABLE))
   {
     RemoteDSLink *link = client->sock_data;
@@ -166,6 +171,10 @@ static void broker_ssl_server_client_ready(uv_poll_t *poll, int status,
           client = NULL;
         }
       }
+    }
+    else
+    {
+      log_debug("Link is gone\n");
     }
   }
 }
