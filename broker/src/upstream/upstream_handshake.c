@@ -119,6 +119,10 @@ void upstream_io_handler(uv_poll_t *poll, int status, int events) {
         int stat = wslay_event_recv(upstreamPoll->ws);
         log_debug("upstream_io_handler: read status %d\n", stat );
         reconnect_if_error_occured(stat, upstreamPoll);
+        // The reconnect may remove the ws context, in this case we need to return here.
+        if ( !upstreamPoll->ws ) {
+          return;
+        }
     }
 
     if (events & UV_WRITABLE) {
