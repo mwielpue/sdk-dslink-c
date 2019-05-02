@@ -90,26 +90,19 @@ int dslink_response_sub(DSLink *link, json_t *paths, json_t *rid) {
     json_t *value;
     json_array_foreach(paths, index, value) {
         const char *path = json_string_value(json_object_get(value, "path"));
-        uint32_t *sid = dslink_malloc(sizeof(uint32_t));
-        if (!sid) {
-            return DSLINK_ALLOC_ERR;
-        }
-        *sid = (uint32_t) json_integer_value(json_object_get(value, "sid"));
-        ref_t *ref = dslink_int_ref(*sid);
-	ref_t *pathRef = dslink_str_ref( path );
+        uint32_t sid = (uint32_t) json_integer_value(json_object_get(value, "sid"));
+        ref_t *ref = dslink_int_ref(sid);
+        ref_t *pathRef = dslink_str_ref( path );
         if (dslink_map_set(link->responder->value_path_subs, pathRef, ref) != 0) {
-	  dslink_free(sid);
-	  dslink_decref(ref);
-	  dslink_decref(pathRef);
-	  return 1;
+          dslink_decref(ref);
+          dslink_decref(pathRef);
+          return 1;
         }
-        if (dslink_map_set(link->responder->value_sid_subs,
-                           dslink_incref(ref), dslink_incref(pathRef)) != 0) {
-	  dslink_map_remove(link->responder->value_path_subs, (void*)path);
-	  dslink_free(sid);
-	  dslink_decref(ref);
-	  dslink_decref(pathRef);
-	  return 1;
+        if (dslink_map_set(link->responder->value_sid_subs, dslink_incref(ref), dslink_incref(pathRef)) != 0) {
+          dslink_map_remove(link->responder->value_path_subs, (void*)path);
+          dslink_decref(ref);
+          dslink_decref(pathRef);
+          return 1;
         }
 
         DSNode *node = dslink_node_get_path(root, path);
@@ -117,12 +110,10 @@ int dslink_response_sub(DSLink *link, json_t *paths, json_t *rid) {
             continue;
         }
 
-        dslink_response_send_val(link, node, *sid);
+        dslink_response_send_val(link, node, sid);
         if (node->on_subscribe) {
             node->on_subscribe(link, node);
         }
-
-        dslink_free(sid);
     }
     return 0;
 }
