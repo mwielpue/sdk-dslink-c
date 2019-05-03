@@ -647,6 +647,7 @@ static void dslink_process_async_tasks(uv_async_t *async_handle)
     dslink_vector_foreach_end();
     vector_erase_range(processing_queue, 0, vector_count(processing_queue));
     vector_free(processing_queue);
+    dslink_free(processing_queue);
 }
 
 static int add_async_task(DSLink* link, AsyncTaskWrapperFunction wrapperFunction, void* data)
