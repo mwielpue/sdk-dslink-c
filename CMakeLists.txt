@@ -142,6 +142,7 @@ set(DSLINK_SRC
     "${DSLINK_SRC_DIR}/msg/request_handler.c"
     "${DSLINK_SRC_DIR}/msg/response_handler.c"
     "${DSLINK_SRC_DIR}/msg/sub_response.c"
+    "${DSLINK_SRC_DIR}/msg/closed_response.c"
 
     "${DSLINK_SRC_DIR}/base64_url.c"
     "${DSLINK_SRC_DIR}/dslink.c"
