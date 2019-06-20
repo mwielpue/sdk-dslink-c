@@ -319,10 +319,8 @@ void recv_frame_cb(wslay_event_context_ptr ctx,
     if (link->is_responder && reqs) {
         size_t index;
         json_t *value;
-        json_array_foreach(reqs, index, value) {
-            if (dslink_request_handle(link, value) != 0) {
-                log_err("Failed to handle request\n");
-            }
+        json_array_foreach(reqs, index, value) {  
+            dslink_request_handle(link, value);
         }
     }
 

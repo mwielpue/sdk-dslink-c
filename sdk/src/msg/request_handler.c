@@ -6,6 +6,7 @@
 #include "dslink/msg/request_handler.h"
 #include "dslink/msg/list_response.h"
 #include "dslink/msg/sub_response.h"
+#include "dslink/msg/closed_response.h"
 
 #define LOG_TAG "request_handler"
 #include "dslink/log.h"
@@ -18,30 +19,31 @@ void free_stream(void* p) {
 }
 
 int dslink_request_handle(DSLink *link, json_t *req) {
+    int result = 0;
+    json_t *rid = json_object_get(req, "rid");
     const char *method = json_string_value(json_object_get(req, "method"));
+    
     if (!method) {
-        return 1;
-    }
-
-    if (strcmp(method, "list") == 0) {
+        result = 1;
+    } else if (strcmp(method, "list") == 0) {
         const char *path = json_string_value(json_object_get(req, "path"));
         DSNode *node = dslink_node_get_path(link->responder->super_root, path);
-        return dslink_response_list(link, req, node);
+        result = dslink_response_list(link, req, node);
     } else if (strcmp(method, "subscribe") == 0) {
         json_t *paths = json_object_get(req, "paths");
         json_t *rid = json_object_get(req, "rid");
-        return dslink_response_sub(link, paths, rid);
+        result = dslink_response_sub(link, paths, rid);
     } else if (strcmp(method, "unsubscribe") == 0) {
         json_t *sids = json_object_get(req, "sids");
         json_t *rid = json_object_get(req, "rid");
-        return dslink_response_unsub(link, sids, rid);
+        result = dslink_response_unsub(link, sids, rid);
     } else if (strcmp(method, "invoke") == 0) {
         const char *path = json_string_value(json_object_get(req, "path"));
         DSNode *node = dslink_node_get_path(link->responder->super_root, path);
         if (node && node->on_invocation) {
             Stream *stream = dslink_malloc(sizeof(Stream));
             if (!stream) {
-                return 1;
+                result = 1;
             }
             stream->type = INVOCATION_STREAM;
             stream->path = dslink_strdup(node->path);
@@ -70,7 +72,7 @@ int dslink_request_handle(DSLink *link, json_t *req) {
                     dslink_free(rid);
                     dslink_free(stream_ref);
                     free_stream(stream);
-                    return 1;
+                    result = 1;
                 }
             }
         }
@@ -113,7 +115,16 @@ int dslink_request_handle(DSLink *link, json_t *req) {
             dslink_decref(stream_ref);
         }
     } else {
-        log_warn("Unrecognized method: %s\n", method);
+        result = 1;
     }
-    return 0;
+
+    if ( result ) {
+      if ( rid ) {
+        dslink_response_send_closed( link, rid );
+        log_warn( "Failed to handle request: %s, rid %d\n", (method ? method : "<NULL>"), (rid ? (uint32_t)json_integer_value(rid) : 0));
+      } else {
+        log_warn( "Failed to handle request: %s\n", (method ? method : "<NULL>") );
+      }          
+    }
+    return result;
 }
