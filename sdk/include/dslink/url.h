@@ -17,8 +17,6 @@ typedef struct Url {
 
 Url *dslink_url_parse(const char *address);
 
-char *dslink_url_convert_string(Url *url, char *urlStr);
-
 void dslink_url_free(Url *url);
 
 void dslink_url_handle_scheme(const char *scheme,
